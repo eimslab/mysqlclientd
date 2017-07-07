@@ -1,0 +1,19 @@
+{
+	"authors": [
+		"Pavel Evstigneev",
+		"Adam D. Ruppe"
+	],
+	"name": "mysqlclientd",
+	"systemDependencies": "mysqlclient",
+	"targetType": "library",
+	"license": "MIT",
+	"version": "1.0.0",
+	"copyright": "Copyright © 2014, Pavel",
+	"description": "Mysql client C library binding.",
+	"libs-windows": [
+		"libmysql"
+	],
+	"libs-posix": [
+		"mysqlclient"
+	]
+}
