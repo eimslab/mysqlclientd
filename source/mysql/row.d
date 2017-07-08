@@ -1,6 +1,7 @@
 module mysql.row;
 
 import std.conv;
+import std.typecons;
 
 import mysql.binding;
 import mysql.connection;
@@ -8,6 +9,8 @@ import mysql.connection;
 string yield(string what) {
     return `if (auto result = dg(` ~ what ~ `)) return result;`;
 }
+
+alias Row = Nullable!MySQLRow;
 
 struct MySQLRow {
     package string[] row;
