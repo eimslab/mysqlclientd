@@ -6,6 +6,8 @@ import std.exception;
 import mysql.binding;
 import mysql.row;
 
+alias Rows = Result;
+
 class Result {
     private int[string] mapping;
     public MYSQL_RES* result;
