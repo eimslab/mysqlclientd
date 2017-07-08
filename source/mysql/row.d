@@ -6,12 +6,12 @@ import mysql.binding;
 import mysql.connection;
 
 string yield(string what) {
-    return `if(auto result = dg(`~what~`)) return result;`;
+    return `if(auto result = dg(` ~ what ~ `)) return result;`;
 }
 
 struct Row {
     package string[] row;
-    package Result resultSet;
+    package ResultSet resultSet;
 
     string opIndex(size_t idx, string file = __FILE__, int line = __LINE__) {
         if(idx >= row.length)

@@ -6,22 +6,15 @@ import std.stdio;
 
 import core.vararg;
 
+import mysql.resultset;
+
 interface Database {
-    /// Actually implements the query for the database. The query() method
-    /// below might be easier to use.
     ResultSet queryImpl(string sql, Variant[] args...);
 
-    /// Escapes data for inclusion into an sql string literal
     string escape(string sqlData);
 
-    /// query to start a transaction, only here because sqlite is apparently different in syntax...
     void startTransaction();
 
-    // FIXME: this would be better as a template, but can't because it is an interface
-
-    /// Just executes a query. It supports placeholders for parameters
-    /// by using ? in the sql string. NOTE: it only accepts string, int, long, and null types.
-    /// Others will fail runtime asserts.
     final ResultSet query(string sql, ...) {
         Variant[] args;
         foreach(arg; _arguments) {
@@ -54,16 +47,6 @@ interface Database {
     }
 }
 
-/*
-Ret queryOneColumn(Ret, string file = __FILE__, size_t line = __LINE__, T...)(Database db, string sql, T t) {
-    auto res = db.query(sql, t);
-    if(res.empty)
-        throw new Exception("no row in result", file, line);
-    auto row = res.front;
-    return to!Ret(row[0]);
-}
-*/
-
 struct Query {
     ResultSet result;
     this(T...)(Database db, string sql, T t) if(T.length!=1 || !is(T[0]==Variant[])) {
@@ -91,66 +74,7 @@ struct Query {
     }
 }
 
-struct Row {
-    package string[] row;
-    package ResultSet resultSet;
-
-    string opIndex(size_t idx, string file = __FILE__, int line = __LINE__) {
-        if(idx >= row.length)
-            throw new Exception(text("index ", idx, " is out of bounds on result"), file, line);
-        return row[idx];
-    }
-
-    string opIndex(string name, string file = __FILE__, int line = __LINE__) {
-        auto idx = resultSet.getFieldIndex(name);
-        if(idx >= row.length)
-            throw new Exception(text("no field ", name, " in result"), file, line);
-        return row[idx];
-    }
-
-    string toString() {
-        return to!string(row);
-    }
-
-    string[string] toAA() {
-        string[string] a;
-
-        string[] fn = resultSet.fieldNames();
-
-        foreach(i, r; row)
-            a[fn[i]] = r;
-
-        return a;
-    }
-
-    int opApply(int delegate(ref string, ref string) dg) {
-        foreach(a, b; toAA())
-            mixin(yield("a, b"));
-
-        return 0;
-    }
-
-
-
-    string[] toStringArray() {
-        return row;
-    }
-}
 import std.conv;
-
-interface ResultSet {
-    // name for associative array to result index
-    int getFieldIndex(string field);
-    string[] fieldNames();
-
-    // this is a range that can offer other ranges to access it
-    bool empty() @property;
-    Row front() @property;
-    void popFront() ;
-    int length() @property;
-
-    /* deprecated */ final ResultSet byAssoc() { return this; }
-}
 
 class DatabaseException : Exception {
     this(string msg, string file = __FILE__, size_t line = __LINE__) {
@@ -159,10 +83,8 @@ class DatabaseException : Exception {
 }
 
 
-
 abstract class SqlBuilder { }
 
-/// WARNING: this is as susceptible to SQL injections as you would be writing it out by hand
 class SelectBuilder : SqlBuilder {
     string[] fields;
     string table;
@@ -183,16 +105,6 @@ class SelectBuilder : SqlBuilder {
     this(Database db = null) {
         this.db = db;
     }
-
-    /*
-        It would be nice to put variables right here in the builder
-
-        ?name
-
-        will prolly be the syntax, and we'll do a Variant[string] of them.
-
-        Anything not translated here will of course be in the ending string too
-    */
 
     SelectBuilder cloned() {
         auto s = new SelectBuilder(this.db);
@@ -580,39 +492,6 @@ string fixupSqlForDataObjectUse(string sql, string[string] keyMapping = null) {
 
 import mysql.data_object;
 
-/**
-    Given some SQL, it finds the CREATE TABLE
-    instruction for the given tableName.
-    (this is so it can find one entry from
-    a file with several SQL commands. But it
-    may break on a complex file, so try to only
-    feed it simple sql files.)
-
-    From that, it pulls out the members to create a
-    simple struct based on it.
-
-    It's not terribly smart, so it will probably
-    break on complex tables.
-
-    Data types handled:
-        INTEGER, SMALLINT, MEDIUMINT -> D's int
-        TINYINT -> D's bool
-        BIGINT -> D's long
-        TEXT, VARCHAR -> D's string
-        FLOAT, DOUBLE -> D's double
-
-    It also reads DEFAULT values to pass to D, except for NULL.
-    It ignores any length restrictions.
-
-    Bugs:
-        Skips all constraints
-        Doesn't handle nullable fields, except with strings
-        It only handles SQL keywords if they are all caps
-
-    This, when combined with SimpleDataObject!(),
-    can automatically create usable D classes from
-    SQL input.
-*/
 struct StructFromCreateTable(string sql, string tableName) {
     mixin(getCreateTable(sql, tableName));
 }

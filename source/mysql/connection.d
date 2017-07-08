@@ -2,7 +2,7 @@ module mysql.connection;
 
 import mysql.binding;
 
-public import mysql.result;
+public import mysql.resultset;
 public import mysql.row;
 import mysql.query_interface;
 
@@ -15,8 +15,6 @@ class MysqlDatabaseException : Exception {
         super(msg, file, line);
     }
 }
-
-//alias Connection = Mysql;
 
 class Connection {
     private string _dbname;
@@ -112,11 +110,11 @@ class Connection {
         query("START TRANSACTION");
     }
 
-    void commitTransaction() {
+    void commit() {
         query("COMMIT");
     }
 
-    void rollbackTransaction() {
+    void rollback() {
         query("ROLLBACK");
     }
 
@@ -154,12 +152,12 @@ class Connection {
     }
 
     // MYSQL API call
-    Result queryImpl(string sql) {
+    Rows queryImpl(string sql) {
         enforceEx!(MysqlDatabaseException)(
             !mysql_query(mysql, toCstring(sql)),
         error() ~ " :::: " ~ sql);
 
-        return new Result(mysql_store_result(mysql), sql);
+        return new ResultSet(mysql_store_result(mysql), sql).toAA();
     }
 
     // To be used with commands that do not return a result (INSERT, UPDATE, etc...)
@@ -193,7 +191,7 @@ class Connection {
     // accept multiple attributes and make replacement of '?' in sql
     // like this:
     // auto row = mysql.query("select * from table where id = ?", 10);
-    Result query(T...)(string sql, T t) {
+    Rows query(T...)(string sql, T t) {
         return queryImpl(QueryInterface.makeQuery(this, sql, t));
     }
 
@@ -216,120 +214,10 @@ class Connection {
 
         return Nullable!MysqlRow(row);
     }
-
-/*
-    ResultByDataObject!R queryDataObject(R = DataObject, T...)(string sql, T t) {
-        // modify sql for the best data object grabbing
-        sql = fixupSqlForDataObjectUse(sql);
-
-        auto magic = query(sql, t);
-        return ResultByDataObject!R(cast(MysqlResult) magic, this);
-    }
-
-
-    ResultByDataObject!R queryDataObjectWithCustomKeys(R = DataObject, T...)(string[string] keyMapping, string sql, T t) {
-        sql = fixupSqlForDataObjectUse(sql, keyMapping);
-
-        auto magic = query(sql, t);
-        return ResultByDataObject!R(cast(MysqlResult) magic, this);
-    }
-*/
 }
-
-/*
-struct ResultByDataObject(ObjType) if (is(ObjType : DataObject)) {
-    MysqlResult result;
-    Mysql mysql;
-
-    this(MysqlResult r, Mysql mysql) {
-        result = r;
-        auto fields = r.fields();
-        this.mysql = mysql;
-
-        foreach(i, f; fields) {
-            string tbl = fromCstring(f.org_table is null ? f.table : f.org_table, f.org_table is null ? f.table_length : f.org_table_length);
-            mappings[fromCstring(f.name)] = tuple(
-                    tbl,
-                    fromCstring(f.org_name is null ? f.name : f.org_name, f.org_name is null ? f.name_length : f.org_name_length));
-        }
-
-
-    }
-
-    Tuple!(string, string)[string] mappings;
-
-    ulong length() { return result.length; }
-    bool empty() { return result.empty; }
-    void popFront() { result.popFront(); }
-    ObjType front() {
-        return new ObjType(mysql, result.front.toAA, mappings);
-    }
-    // would it be good to add a new() method? would be valid even if empty
-    // it'd just fill in the ID's at random and allow you to do the rest
-
-    @disable this(this) { }
-}
-*/
-
 
 class EmptyResultException : Exception {
     this(string message, string file = __FILE__, size_t line = __LINE__) {
         super(message, file, line);
     }
 }
-
-
-/*
-void main() {
-    auto mysql = new Mysql("localhost", "uname", "password", "test");
-    scope(exit) delete mysql;
-
-    mysql.query("INSERT INTO users (id, password) VALUES (?, ?)", 10, "lol");
-
-    foreach(row; mysql.query("SELECT * FROM users")) {
-        writefln("%s %s %s %s", row["id"], row[0], row[1], row["username"]);
-    }
-}
-*/
-
-/+
-    mysql.linq.tablename.field[key] // select field from tablename where id = key
-
-    mysql.link["name"].table.field[key] // select field from table where name = key
-
-
-    auto q = mysql.prepQuery("select id from table where something");
-    q.sort("name");
-    q.limit(start, count);
-    q.page(3, pagelength = ?);
-
-    q.execute(params here); // returns the same Result range as query
-+/
-
-/*
-void main() {
-    auto db = new Mysql("localhost", "uname", "password", "test");
-    foreach(item; db.queryDataObject("SELECT users.*, username
-        FROM users, password_manager_accounts
-        WHERE password_manager_accounts.user_id =  users.id LIMIT 5")) {
-        writefln("item: %s, %s", item.id, item.username);
-        item.first = "new";
-        item.last = "new2";
-        item.username = "kill";
-        //item.commitChanges();
-    }
-}
-*/
-
-
-/*
-Copyright: Adam D. Ruppe, 2009 - 2011
-License:   <a href="http://www.boost.org/LICENSE_1_0.txt">Boost License 1.0</a>.
-Authors: Adam D. Ruppe, with contributions from Nick Sabalausky
-
-        Copyright Adam D. Ruppe 2009 - 2011.
-Distributed under the Boost Software License, Version 1.0.
-   (See accompanying file LICENSE_1_0.txt or copy at
-        http://www.boost.org/LICENSE_1_0.txt)
-*/
-

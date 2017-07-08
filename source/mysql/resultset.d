@@ -1,4 +1,4 @@
-module mysql.result;
+module mysql.resultset;
 
 import std.stdio;
 import std.exception;
@@ -6,9 +6,9 @@ import std.exception;
 import mysql.binding;
 import mysql.row;
 
-alias Rows = Result;
+alias Rows = Row[];
 
-class Result {
+class ResultSet {
     private int[string] mapping;
     public MYSQL_RES* result;
 
@@ -137,5 +137,16 @@ class Result {
 
         this.row.row = row;
         this.row.resultSet = this;
+    }
+    
+    Rows toAA()
+    {
+    	Row[] rows;
+    	foreach(row; this)
+    	{
+    		rows ~= row;
+    	}
+    	
+    	return rows;
     }
 }
