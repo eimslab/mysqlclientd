@@ -207,10 +207,10 @@ class Connection {
     // and if no rows then raise an exception
     Nullable!Row queryOneRow(string file = __FILE__, size_t line = __LINE__, T...)(string sql, T t) {
         auto res = query(sql, t);
-        if (res.empty) {
-            return null;//Nullable!Row.init;
+        if (res.length == 0) {
+            return Nullable!Row.init;
         }
-        auto row = res.front;
+        auto row = res[0];//.front;
 
         return Nullable!Row(row);
     }

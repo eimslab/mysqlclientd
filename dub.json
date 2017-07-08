@@ -7,7 +7,7 @@
 	"systemDependencies": "mysqlclient",
 	"targetType": "library",
 	"license": "MIT",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"copyright": "Copyright © 2014, Pavel",
 	"description": "Mysql client C library binding.",
 	"libs-windows": [
