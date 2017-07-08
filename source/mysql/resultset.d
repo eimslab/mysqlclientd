@@ -6,7 +6,7 @@ import std.exception;
 import mysql.binding;
 import mysql.row;
 
-alias Rows = Row[];
+alias Rows = MySQLRow[];
 
 class ResultSet {
     private int[string] mapping;
@@ -16,7 +16,7 @@ class ResultSet {
     private int itemsUsed;
 
     bool[] columnIsNull;
-    Row row;
+    MySQLRow row;
 
     string sql;
 
@@ -63,7 +63,7 @@ class ResultSet {
         return itemsUsed == itemsTotal;
     }
 
-    Row front() {
+    MySQLRow front() {
         return row;
     }
 
@@ -141,7 +141,7 @@ class ResultSet {
     
     Rows toAA()
     {
-    	Row[] rows;
+    	MySQLRow[] rows;
     	foreach(row; this)
     	{
     		rows ~= row;

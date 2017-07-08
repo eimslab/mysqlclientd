@@ -9,7 +9,7 @@ string yield(string what) {
     return `if (auto result = dg(` ~ what ~ `)) return result;`;
 }
 
-struct Row {
+struct MySQLRow {
     package string[] row;
     package ResultSet resultSet;
 

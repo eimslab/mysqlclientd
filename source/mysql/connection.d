@@ -205,14 +205,14 @@ class Connection {
 
     // simply make mysq.query().front
     // and if no rows then raise an exception
-    Nullable!Row queryOneRow(string file = __FILE__, size_t line = __LINE__, T...)(string sql, T t) {
+    Nullable!MySQLRow queryOneRow(string file = __FILE__, size_t line = __LINE__, T...)(string sql, T t) {
         auto res = query(sql, t);
         if (res.length == 0) {
-            return Nullable!Row.init;
+            return Nullable!MySQLRow.init;
         }
         auto row = res[0];//.front;
 
-        return Nullable!Row(row);
+        return Nullable!MySQLRow(row);
     }
 }
 
