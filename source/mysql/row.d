@@ -6,7 +6,7 @@ import mysql.binding;
 import mysql.connection;
 
 string yield(string what) {
-    return `if(auto result = dg(` ~ what ~ `)) return result;`;
+    return `if (auto result = dg(` ~ what ~ `)) return result;`;
 }
 
 struct Row {
