@@ -41,12 +41,12 @@ class Connection {
     }
 
     private void initMysql () {
-        mysql = enforceEx!(MysqlDatabaseException)(mysql_init(null), "Couldn't init mysql");
+        mysql = enforce!(MysqlDatabaseException)(mysql_init(null), "Couldn't init mysql");
         setReconnect(true);
     }
 
     void connect(string host, uint port, string user, string pass, string db, string unixSocket) {
-        enforceEx!(MysqlDatabaseException)(
+        enforce!(MysqlDatabaseException)(
             mysql_real_connect(mysql,
                 toCstring(host),
                 toCstring(user),
@@ -153,7 +153,7 @@ class Connection {
 
     // MYSQL API call
     Rows queryImpl(string sql) {
-        enforceEx!(MysqlDatabaseException)(
+        enforce!(MysqlDatabaseException)(
             !mysql_query(mysql, toCstring(sql)),
         error() ~ " :::: " ~ sql);
 
@@ -213,6 +213,20 @@ class Connection {
         auto row = res[0];//.front;
 
         return Nullable!MySQLRow(row);
+    }
+
+package:
+
+    bool _busy = false;
+
+    @property bool busy()
+    {
+        return _busy;
+    }
+
+    @property void busy(bool value)
+    {
+        _busy = value;
     }
 }
 
